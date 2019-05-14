@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ParseExpression.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ale-goff <ale-goff@student.42.fr>          +#+  +:+       +#+        */
+/*   By: Alex <Alex@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/13 11:03:19 by ale-goff          #+#    #+#             */
-/*   Updated: 2019/05/13 23:09:25 by ale-goff         ###   ########.fr       */
+/*   Updated: 2019/05/14 01:19:55 by Alex             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,11 +61,11 @@ int        ParseExpression::acceptSign( void ) {
     } while (_expr[_idx] == '+') {
         _idx++;
     }
+	sign = count % 2 == 0 ? 1 : -1; 
     if (_expr[_idx] == '=') {
         sign = -1;
         _idx++;
     }
-    sign = count % 2 == 0 ? 1 : -1; 
     return sign;
 } 
 
