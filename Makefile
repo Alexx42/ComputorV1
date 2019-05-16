@@ -6,7 +6,7 @@
 #    By: ale-goff <ale-goff@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2019/05/13 10:47:30 by ale-goff          #+#    #+#              #
-#    Updated: 2019/05/13 20:11:05 by ale-goff         ###   ########.fr        #
+#    Updated: 2019/05/15 00:10:04 by ale-goff         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,7 +17,7 @@ SRCS = computorv1.cpp ParseExpression.cpp
 OBJ = computorv1.o ParseExpression.o
 
 CXX = clang++
-CXXFLAGS = -g -fsanitize=address -Wall -Werror -Wextra -std=c++98
+CXXFLAGS = -g3 -fsanitize=address -Wall -Werror -Wextra -std=c++98
 
 all: $(NAME)
 

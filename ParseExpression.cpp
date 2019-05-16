@@ -3,16 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   ParseExpression.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Alex <Alex@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: ale-goff <ale-goff@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/13 11:03:19 by ale-goff          #+#    #+#             */
-/*   Updated: 2019/05/14 01:19:55 by Alex             ###   ########.fr       */
+/*   Updated: 2019/05/15 18:07:21 by ale-goff         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ParseExpression.hpp"
 
-ParseExpression::ParseExpression( std::string expr ) : _expr(expr), _idx(0) {
+ParseExpression::ParseExpression( char *str ) : _idx(0), _equal(0) {
+    _expr = str;
     _expr.erase(remove_if(_expr.begin(), _expr.end(), isspace), _expr.end());
     return ;
 }
@@ -42,41 +43,50 @@ const char *ParseExpression::BadExpression::what( void ) const throw() {
     return "Bad expression";
 }
 
-MapData<int, int>  & ParseExpression::getMapData( void )  {
+MapData<int, float>  & ParseExpression::getMapData( void )  {
     return this->_val;
 }
 
 int        ParseExpression::acceptSign( void ) {
-    int     sign;
+    int     sign = 1;
     int     count = 0;
 
-    sign = 1;
-    if (IS_OP(_expr[_idx]) && (!_expr[_idx + 1] || (!isdigit(_expr[_idx + 1]) && !IS_OP(_expr[_idx + 1])))) {
+    if (IS_OP(_expr[_idx]) && (!_expr[_idx + 1] || (!isdigit(_expr[_idx + 1]) && !IS_OP(_expr[_idx + 1]) && _expr[_idx + 1] != 'x'))) {
         throw BadExpression();
     }
-    while (_expr[_idx] == '-') {
+    if (_equal == 1) {
         count++;
-        sign = -1;
-        _idx++;
-    } while (_expr[_idx] == '+') {
-        _idx++;
     }
-	sign = count % 2 == 0 ? 1 : -1; 
     if (_expr[_idx] == '=') {
-        sign = -1;
+        _equal = 1;
+        count++;
         _idx++;
     }
+    while (_expr[_idx] == '+' || _expr[_idx] == '-') {
+        if (_expr[_idx] == '-') {
+            count++;
+        }
+        _idx++;
+    }
+    sign = count % 2 == 0 ? 1 : -1;
     return sign;
 } 
 
 float        ParseExpression::acceptNumber( void ) {
-    int     num;
-    char    *end;
+    float     num;
 
+    if (!isdigit(_expr[_idx]) && _expr[_idx] != 'x') {
+        throw BadExpression();
+    }
     if (_expr[_idx] != 'x') {
-        num = std::strtol(&_expr.c_str()[_idx], &end, 10);
-        std::string tmp = std::to_string(num);
-        _idx += tmp.size() ;
+        num = std::stof(&_expr[_idx]);
+        std::ostringstream tmp;
+        tmp << num;
+        _idx += tmp.str().size();
+        if (_expr[_idx] == '.')
+            _idx++;
+        while (_expr[_idx] == '0')
+            _idx++;
     } else {
         num = 1;
     }
@@ -84,11 +94,11 @@ float        ParseExpression::acceptNumber( void ) {
 }
 
 
-int        ParseExpression::acceptExponent( void ) {
+int        ParseExpression::acceptExponent(  ) {
     int     e;
 
     e = 0;
-    if (_expr[_idx] == 'x') {
+    if (_expr[_idx] == 'x' || _expr[_idx] == '^') {
         e = 1;
         _idx++;
         if (_expr[_idx] == '^') {
@@ -96,10 +106,38 @@ int        ParseExpression::acceptExponent( void ) {
             if (!_expr[_idx] || (isdigit(_expr[_idx]) == false && _expr[_idx] != '-')) {
                 throw BadExpression();
             }
-            e = acceptNumber();
+            if (_expr[_idx] == '0') {
+                _idx++;
+                e = 0;
+            }
+            else
+                e = acceptNumber();
+            if (_expr[_idx] == '^') {
+                _idx++;
+                e *= acceptNumber();
+            }
         }
     }
     return e;
+}
+
+float       ParseExpression::acceptOperator( float n) {
+    if (_expr[_idx]) {
+        if (_expr[_idx] == '/') {
+            if (_expr[_idx + 1] == '0') {
+                throw BadExpression();
+            }
+            _idx++;
+            n /= acceptNumber();
+        } else if (_expr[_idx] == '*') {
+             _idx++;
+            n *= acceptNumber();
+        }
+    }
+    if (_expr[_idx] && _expr[_idx] == '*') {
+        n = acceptOperator( n );
+    }
+    return n;
 }
 
 float        ParseExpression::acceptCoefficient() {
@@ -108,6 +146,7 @@ float        ParseExpression::acceptCoefficient() {
 
     sign = acceptSign();
     n = acceptNumber();
+    n = acceptOperator( n );
     return n * sign;
 }
 
@@ -119,7 +158,7 @@ bool        ParseExpression::acceptTerm( void ) {
         return false;
     n = acceptCoefficient();
     e = acceptExponent();
-    // _val.insert(std::pair<float, int>(e, n));
+    n = acceptOperator( n );
     this->_val.myInsert(e, n);
     return acceptTerm();
 }
